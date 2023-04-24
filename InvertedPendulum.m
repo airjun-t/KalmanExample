@@ -126,6 +126,11 @@ r = [1; 0; pi; 0];
 
 for k = 1:length(t)-1                                                                                                           
 
+% to demonstrate basic filter, uncomment lines 133-140ish and comment out 
+% and comment out the LQR control lines (146-153)
+
+
+
 %     if k >=100 && k < 120 
 %         u(k) = 100;
 %     elseif k >= 1500 && k <= 1520 
