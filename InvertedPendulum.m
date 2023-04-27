@@ -88,13 +88,13 @@ hold off;
 
 %% Discrete simulation
          
-T = 25;
+T = 50;
 dt = 0.01;
 t = 0:dt:T;
 
 
-% F_sysC = @(time,state,input) A * state + BF* input;
-F_sysC = @(time,state,input) A * state + B * input;
+F_sys = @(time,state,input) A * state + BF* input;
+F_model = @(time,state,input) A * state + B * input;
 
 F_x = @(t,x) A * x;
 F_Pdot = @(time,state,input) A * P * A' + Q;
@@ -106,7 +106,7 @@ y = zeros(1,length(t));
 u = zeros(1,length(t));
 
 %Intial Conditions
-x0 = [-1; 0; pi+0.1; 0];
+x0 = [0; 0; 0; 0];
 x(:,1) = x0;
 x_hat(:,1) = x0;
 y(1) = C * x0;
@@ -131,38 +131,35 @@ for k = 1:length(t)-1
 
 
 
-%     if k >=100 && k < 120 
-%         u(k) = 100;
-%     elseif k >= 1500 && k <= 1520 
-%         u(k) = -100;
-%     else
-%         u(k) = 0;
-%     end
+    if k >=100 && k < 120 
+        u(k) = 100;
+    elseif k >= 1500 && k <= 1520 
+        u(k) = -100;
+    else
+        u(k) = 0;
+    end
 
-    wk = 0*randn(4,1);
+    wk = Q*randn(4,1);
     vk = randn(1,1);
 
 
-    % LQR Control
-    Qc = diag([1 1 100 1]);
-    Rc = 0.0001;
-    [Kc, Pc, Ec] = dlqr(Ad,Bd,Qc,Rc);
+    input = [u(k); wk; vk];
 
-%     u(:,k+1) = -Kc * (x_next-r);
-    u(:,k) = -Kc * (x(:,k)-r);
-
-    
-    x(:,k+1) = Ad *x(:,k)  + Bd *u(:,k) + Qd*wk; 
     y(k) = C*x(:,k)+ R *vk; % get measurement
 
-    % Kalman Filter
-    [x_temp,P_temp] = project(Ad, Bd, x_hat(:,k), u(:,k),  P, Qd);
     
-    [x_next, Kf, P_next] = estimate(P_temp, C, R, x_temp,y(k));
+    % get initial, unfiltered estimate
+    x_temp = rk4(F_model, t(k), dt, x_hat(:,k), u(:,k));
+    P_temp = rk4(F_Pdot, t(k), dt, P, 0);
+    
+    [x_next, Kf, P_next] = estimate(P_temp, C, R, x_temp, y(k));
+
 
     x_hat(:,k+1) = x_next;
     P = P_next;
   
+    
+    x(:,k+1) = rk4(F_sys,t(k),dt, x(:,k), input); 
     
 
 end
@@ -171,7 +168,7 @@ end
 %% Plot results
 
 figure(2);
-plot(t,y,'b','DisplayName','noisy');
+plot(t,y,'DisplayName','noisy');
 hold on;
 plot(t,C*x_hat,'k--','DisplayName','estimate');
 % plot(t,C*x,'ro','DisplayName','real');
