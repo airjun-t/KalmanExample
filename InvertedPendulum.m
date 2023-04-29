@@ -95,8 +95,6 @@ t = 0:dt:T;
 
 F_sys = @(time,state,input) A * state + BF* input;
 F_model = @(time,state,input) A * state + B * input;
-
-F_x = @(t,x) A * x;
 F_Pdot = @(time,state,input) A * P * A' + Q;
 
 
@@ -113,22 +111,10 @@ y(1) = C * x0;
 P = zeros(4,4);
 u(1) = 0;
 
-% Discretize the state space model
-
-
-
-sysDis = c2d(sysFullOutput,dt,'foh');
-Ad = sysDis.A;
-Bd = sysDis.B(:,1);
-Qd = sysDis.B(:,2:5);
-
-r = [1; 0; pi; 0];
-
 for k = 1:length(t)-1                                                                                                           
 
 % to demonstrate basic filter, uncomment lines 133-140ish and comment out 
 % and comment out the LQR control lines (146-153)
-
 
 
     if k >=100 && k < 120 
@@ -166,8 +152,8 @@ end
 
 % 
 %% Plot results
-
-figure(2);
+axis tight;
+figure(1);
 plot(t,y,'DisplayName','noisy');
 hold on;
 plot(t,C*x_hat,'k--','DisplayName','estimate');
@@ -175,7 +161,20 @@ plot(t,C*x_hat,'k--','DisplayName','estimate');
 hold off;
 legend();
 
-figure(3);
+figure(2);
 
-plot(t,x);
-legend('x','v','\theta','\omega');
+
+plot(t,x(2,:),'DisplayName','v true','LineWidth',2);
+hold on;
+
+plot(t,x_hat(2,:),'k--','DisplayName','v hat','LineWidth',2);
+
+plot(t,x(3,:),'DisplayName','\theta true','LineWidth',2);
+plot(t,x_hat(3,:),'k--','DisplayName','\theta hat','LineWidth',2);
+
+plot(t,x(4,:),'DisplayName','\omega true','LineWidth',2);
+plot(t,x_hat(4,:),'k--','DisplayName','\omega hat','LineWidth',2);
+
+title("Unmeasured States");
+legend();
+hold off;
